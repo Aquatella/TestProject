@@ -1,0 +1,178 @@
+﻿<style>
+    div {
+        display: inline-block;
+        margin: 20px;
+    }
+
+    #tableBlock {
+        width: auto;
+    }
+
+    #editBlock {
+        display: none;
+        float: right;
+    }
+
+    #createBlock {
+        float: right;
+    }
+</style>
+<div id="tableBlock"></div>
+<div id="editBlock">
+    <p><b>Редактирование пользователя</b></p>
+    <table>
+        <tr><td><input type="hidden" id="editId" /></td><td></td></tr>
+        <tr><td><label>Имя: </label></td><td><input type="text" id="editName" /></td></tr>
+        <tr><td><label>Пароль: </label></td><td><input type="text" id="editPassword" /></td></tr>
+    </table>
+    <button id="editUser">Сохранить</button>
+</div>
+<div id="createBlock">
+    <p><b>Добавление пользователя</b></p>
+    <table>
+        <tr><td><label>Имя: </label></td><td><input type="text" id="addName" /></td></tr>
+        <tr><td><label>Пароль: </label></td><td><input type="text" id="addPassword" /></td></tr>
+    </table>
+    <button id="addUser">Сохранить</button>
+</div>
+@section scripts
+{
+    <script type="text/javascript">
+    $(document).ready(function () {
+
+        GetAllUsers();
+
+        $("#editUser").click(function (event) {
+            event.preventDefault();
+            EditUser();
+        });
+
+        $("#addUser").click(function (event) {
+            event.preventDefault();
+            AddUser();
+        });
+
+    });
+
+    function GetAllUsers() {
+
+        $("#createBlock").css('display', 'block');
+        $("#editBlock").css('display', 'none');
+        $.ajax({
+            url: '/api/values',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                WriteResponse(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+    function AddUser() {
+        var User = {
+            Name: $('#addName').val(),
+            Password: $('#addPassword').val()
+        };
+
+        $.ajax({
+            url: '/api/values/',
+            type: 'POST',
+            data: JSON.stringify(User),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+    function DeleteUser(id) {
+
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'DELETE',
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+    function EditUser() {
+        var id = $('#editId').val()
+        var User = {
+            Id: $('#editId').val(),
+            Name: $('#editName').val(),
+            Password: $('#editPassword').val()
+        };
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'PUT',
+            data: JSON.stringify(User),
+            contentType: "application/json;charset=utf-8",
+            success: function (data) {
+                GetAllUsers();
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+
+    function WriteResponse(Users) {
+        var strResult = "<table><th>ID</th><th>Название</th><th>Автор</th><th>Год издания</th>";
+        $.each(Users, function (index, User) {
+            strResult += "<tr><td>" + User.Id + "</td><td> " + User.Name + "</td><td>" +
+            User.Password + "</td><td>" +
+            "</td><td><a id='editItem' data-item='" + User.Id + "' onclick='EditItem(this);' >Редактировать</a></td>" +
+            "<td><a id='delItem' data-item='" + User.Id + "' onclick='DeleteItem(this);' >Удалить</a></td></tr>";
+        });
+        strResult += "</table>";
+        $("#tableBlock").html(strResult);
+
+    }
+
+    function DeleteItem(el) {
+        var id = $(el).attr('data-item');
+        DeleteUser(id);
+    }
+    function EditItem (el) {
+        var id = $(el).attr('data-item');
+        GetUser(id);
+    }
+
+    function ShowUser(User) {
+        if (User != null) {
+            $("#createBlock").css('display', 'none');
+            $("#editBlock").css('display', 'block');
+            $("#editId").val(User.Id);
+            $("#editName").val(User.Name);
+            $("#editPassword").val(User.Password);
+        }
+        else {
+            alert("Нет такого пользователя");
+        }
+    }
+    function GetUser(id) {
+        $.ajax({
+            url: '/api/values/' + id,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                ShowUser(data);
+            },
+            error: function (x, y, z) {
+                alert(x + '\n' + y + '\n' + z);
+            }
+        });
+    }
+    </script>
+}
